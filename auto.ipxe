@@ -1,0 +1,56 @@
+#!ipxe
+
+set branch latest-stable
+set flavor virt
+set mirror http://dl-cdn.alpinelinux.org/alpine
+cpuid --ext 29 && set arch x86_64 || set arch x86
+
+:menu
+menu PXE Boot Options
+# 菜单的title
+item --gap Booting
+item boot ${space} Boot with ${arch} ${branch} ${flavor}
+item branch ${space} Custom Branch
+item flavor ${space} Custom Flavor
+item mirror ${space} Custom Mirror
+item --gap Utilities
+item shell ${space} iPXE Shell
+item reboot ${space} Reboot system
+# 菜单显示的条目
+
+choose --default boot --timeout 10000 option && goto ${option}
+# 启动菜单 5000ms 后自动选择 boot 条目
+
+:boot
+imgfree
+kernel ${mirror}/${branch}/releases/${arch}/netboot/vmlinuz-${flavor} modules=loop,squashfs quiet nomodeset alpine_repo=${mirror}/${branch}/main modloop=${mirror}/${branch}/releases/${arch}/netboot/modloop-${flavor} initrd=initramfs-${flavor} console=tty0 ssh_key="ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAqNOStr2WhVIysV06wTfZJDn5t1WCg3x9gqS+JIVFVKySD7FIMR/nGonRX9leOzbClWYHxm9oBpFdym+i87XfMUD+y4CcaTxOZcz514pyV37dT/NwEP1jU1il3lBgn1Jpw3unHB1nq18+1lwIxmT5RVnrcUWZ/mb7C8SpkPVXXpJ/V5fEpNswMCvHJkOiNNfL72f5/Zt0jjNRSum6OPENP6AG62YlKlA8j9tqpSi8BpXkIYSlQZhaYCyZnOXmgamWDSeVnzStH5sC7+gJT5K9ahmx0vIOZDIYydAEvd1lb1bFr+qEAfHz4hSKEVRzZuJva5i+d/JRfmaA1XQH9eajNw=="
+initrd ${mirror}/${branch}/releases/${arch}/netboot/initramfs-${flavor}
+boot
+
+:branch
+menu Branch
+clear branch
+echo -n Enter branch['e.g: v3.11']: && read branch
+goto menu
+
+:flavor
+menu Flavor
+item lts ${space} Linux lts
+item virt ${space} Linux virt
+choose flavor || goto menu
+goto menu
+
+:mirror
+menu Mirror
+clear mirror
+echo -n Enter mirror['e.g: http://dl-cdn.alpinelinux.org/alpine']: && read mirror
+goto menu
+
+:shell
+menu Shell
+echo Type "exit" to return to menu.
+shell
+goto menu
+
+:reboot
+reboot
